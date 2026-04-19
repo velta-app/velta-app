@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/esparev/Documents/Dev/velta/**)",
+      "Bash(pnpm --version)",
+      "Bash(npm --version)",
+      "Bash(npx --yes create-next-app@latest velta-web --typescript --tailwind --app --src-dir --import-alias \"@/*\" --use-npm --eslint --turbopack --no-git --yes)"
+    ]
+  }
+}
