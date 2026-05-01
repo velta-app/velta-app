@@ -4,7 +4,15 @@
       "Read(//Users/esparev/Documents/Dev/velta/**)",
       "Bash(pnpm --version)",
       "Bash(npm --version)",
-      "Bash(npx --yes create-next-app@latest velta-web --typescript --tailwind --app --src-dir --import-alias \"@/*\" --use-npm --eslint --turbopack --no-git --yes)"
+      "Bash(npx --yes create-next-app@latest velta-app --typescript --tailwind --app --src-dir --import-alias \"@/*\" --use-npm --eslint --turbopack --no-git --yes)",
+      "Bash(npm install *)",
+      "mcp__f4d9b78e-7538-45ce-98e9-4cd6424d7595__generate_typescript_types",
+      "Bash(npm run *)",
+      "mcp__f4d9b78e-7538-45ce-98e9-4cd6424d7595__list_tables",
+      "mcp__f4d9b78e-7538-45ce-98e9-4cd6424d7595__list_projects",
+      "mcp__f4d9b78e-7538-45ce-98e9-4cd6424d7595__execute_sql",
+      "Bash(grep -vE \"\\\\.map$\")",
+      "mcp__f4d9b78e-7538-45ce-98e9-4cd6424d7595__apply_migration"
     ]
   }
 }
