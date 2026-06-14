@@ -19,14 +19,25 @@ interface AddTransactionDialogProps {
   initial?: Partial<Transaction>;
   trigger?: React.ReactNode;
   floating?: boolean;
+  /** When true the dialog has no trigger — open/close is controlled externally. */
+  controlled?: boolean;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
 }
 
 export function AddTransactionDialog({
   initial,
   trigger,
   floating,
+  controlled,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: AddTransactionDialogProps) {
-  const [open, setOpen] = React.useState(false);
+  const [localOpen, setLocalOpen] = React.useState(false);
+  const open = controlled ? (controlledOpen ?? false) : localOpen;
+  const setOpen = controlled
+    ? (controlledOnOpenChange ?? (() => {}))
+    : setLocalOpen;
 
   const defaultTrigger = floating ? (
     <Button
@@ -42,12 +53,13 @@ export function AddTransactionDialog({
   ) : (
     <Button>
       <Plus className="h-4 w-4" /> New transaction
+      <span className="ml-1.5 rounded border border-current/20 bg-current/10 px-1.5 tracking-widest text-sm">⌘E</span>
     </Button>
   );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
+      {!controlled && <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>}
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>

@@ -14,17 +14,17 @@ interface UseTransactionsOptions {
   categoryId?: string;
   accountId?: string;
   search?: string;
+  amountMin?: number;
+  amountMax?: number;
 }
 
 export function useTransactions(options: UseTransactionsOptions = {}) {
   const supabase = React.useMemo(() => createClient(), []);
-  const [transactions, setTransactions] = React.useState<
-    TransactionWithRelations[]
-  >([]);
+  const [transactions, setTransactions] = React.useState<TransactionWithRelations[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const { from, to, limit, type, categoryId, accountId, search } = options;
+  const { from, to, limit, type, categoryId, accountId, search, amountMin, amountMax } = options;
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -45,7 +45,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     if (categoryId) q = q.eq("category_id", categoryId);
     if (accountId)
       q = q.or(`from_account_id.eq.${accountId},to_account_id.eq.${accountId}`);
-    if (search) q = q.ilike("note", `%${search}%`);
+    if (search) q = q.ilike("description", `%${search}%`);
+    if (amountMin != null) q = q.gte("amount", amountMin);
+    if (amountMax != null) q = q.lte("amount", amountMax);
     if (limit) q = q.limit(limit);
 
     const { data, error } = await q;
@@ -55,7 +57,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       setError(null);
     }
     setLoading(false);
-  }, [supabase, from, to, limit, type, categoryId, accountId, search]);
+  }, [supabase, from, to, limit, type, categoryId, accountId, search, amountMin, amountMax]);
 
   React.useEffect(() => {
     load();

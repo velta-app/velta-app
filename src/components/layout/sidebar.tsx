@@ -12,6 +12,7 @@ import { useSession } from "@/hooks/use-session";
 import { initials } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
+import { NAV_SHORTCUTS } from "@/hooks/use-keyboard-shortcuts";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -33,8 +34,10 @@ export function Sidebar() {
                 ? pathname === "/"
                 : pathname.startsWith(item.href);
             const Icon = item.icon;
+            const shortcut = NAV_SHORTCUTS.find((s) => s.href === item.href);
             return (
               <Link
+                prefetch
                 key={item.href}
                 href={item.href}
                 className={cn(
@@ -46,11 +49,16 @@ export function Sidebar() {
               >
                 <Icon
                   className={cn(
-                    "h-4 w-4 transition-colors",
+                    "h-4 w-4 shrink-0 transition-colors",
                     active && "text-primary"
                   )}
                 />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {shortcut && (
+                  <kbd className="ml-auto rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] opacity-0 transition-opacity group-hover:opacity-60">
+                    {shortcut.key.toUpperCase()}
+                  </kbd>
+                )}
               </Link>
             );
           })}

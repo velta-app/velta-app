@@ -41,6 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# pnpm
+.pnpm-store
+
 # serwist / pwa (generated)
 /public/sw.js
 /public/sw.js.map

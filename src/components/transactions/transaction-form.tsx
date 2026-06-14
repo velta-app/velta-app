@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { EntityIcon } from "@/components/shared/entity-icon";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -68,7 +74,11 @@ export function TransactionForm({ initial, onDone }: TransactionFormProps) {
   const [toAccountId, setToAccountId] = React.useState(
     initial?.to_account_id ?? ""
   );
+  const [description, setDescription] = React.useState(initial?.description ?? "");
   const [note, setNote] = React.useState(initial?.note ?? "");
+  const [affectsBalance, setAffectsBalance] = React.useState(
+    initial?.affects_balance ?? true
+  );
   const [loading, setLoading] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
 
@@ -134,6 +144,11 @@ export function TransactionForm({ initial, onDone }: TransactionFormProps) {
     e.preventDefault();
     if (!user) return;
 
+    if (!description.trim()) {
+      toast.error("Description is required");
+      return;
+    }
+
     const numAmount = Number(amount);
     if (!Number.isFinite(numAmount) || numAmount <= 0) {
       toast.error("Enter a valid amount");
@@ -146,12 +161,14 @@ export function TransactionForm({ initial, onDone }: TransactionFormProps) {
       amount: numAmount,
       currency,
       date,
+      description: description || null,
       note: note || null,
       category_id: type === "transfer" ? null : categoryId || null,
       from_account_id:
         type === "expense" || type === "transfer" ? fromAccountId || null : null,
       to_account_id:
         type === "income" || type === "transfer" ? toAccountId || null : null,
+      affects_balance: affectsBalance,
     };
 
     if (type === "expense" && !payload.from_account_id) {
@@ -282,6 +299,20 @@ export function TransactionForm({ initial, onDone }: TransactionFormProps) {
             />
           )}
 
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">
+              Description <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Netflix, Salary, OXXO"
+              required
+            />
+          </div>
+
           {/* Amount + currency */}
           <div className="flex gap-2">
             <div className="flex-1 space-y-2">
@@ -323,40 +354,28 @@ export function TransactionForm({ initial, onDone }: TransactionFormProps) {
           {/* Account(s) */}
           {(type === "expense" || type === "transfer") && (
             <div className="space-y-2">
-              <Label htmlFor="from_account">
+              <Label>
                 {type === "transfer" ? "From account" : "Account"}
               </Label>
-              <Select value={fromAccountId} onValueChange={setFromAccountId}>
-                <SelectTrigger id="from_account">
-                  <SelectValue placeholder="Select an account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AccountSelect
+                accounts={accounts}
+                value={fromAccountId}
+                onChange={setFromAccountId}
+                placeholder="Select an account"
+              />
             </div>
           )}
           {(type === "income" || type === "transfer") && (
             <div className="space-y-2">
-              <Label htmlFor="to_account">
+              <Label>
                 {type === "transfer" ? "To account" : "Deposit to"}
               </Label>
-              <Select value={toAccountId} onValueChange={setToAccountId}>
-                <SelectTrigger id="to_account">
-                  <SelectValue placeholder="Select an account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AccountSelect
+                accounts={accounts}
+                value={toAccountId}
+                onChange={setToAccountId}
+                placeholder="Select an account"
+              />
             </div>
           )}
 
@@ -381,9 +400,26 @@ export function TransactionForm({ initial, onDone }: TransactionFormProps) {
             />
           </div>
 
+          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="affects_balance" className="text-sm font-medium cursor-pointer">
+                Affect account balance
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Uncheck to record without changing your balance
+              </p>
+            </div>
+            <Switch
+              id="affects_balance"
+              checked={affectsBalance}
+              onCheckedChange={setAffectsBalance}
+            />
+          </div>
+
           <Button type="submit" className="w-full" size="lg" disabled={loading || deleting}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {initial?.id ? "Save changes" : "Add transaction"}
+            <span className="ml-auto rounded border border-current/20 bg-current/10 px-1.5 tracking-widest text-base">⌘↵</span>
           </Button>
           {initial?.id && (
             <Button
@@ -404,6 +440,73 @@ export function TransactionForm({ initial, onDone }: TransactionFormProps) {
         </form>
       )}
     </div>
+  );
+}
+
+function AccountSelect({
+  accounts,
+  value,
+  onChange,
+  placeholder = "Select an account",
+}: {
+  accounts: { id: string; name: string; icon: string | null; color: string | null }[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const selected = accounts.find((a) => a.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            "flex h-10 w-full items-center gap-2.5 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "hover:bg-accent",
+            !selected && "text-muted-foreground"
+          )}
+        >
+          {selected ? (
+            <>
+              <EntityIcon icon={selected.icon} color={selected.color} fallback="account" size="xs" />
+              <span className="flex-1 truncate text-left">{selected.name}</span>
+            </>
+          ) : (
+            <span className="flex-1 text-left">{placeholder}</span>
+          )}
+          <svg className="ml-auto h-4 w-4 shrink-0 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-1" align="start">
+        <div className="space-y-0.5">
+          {accounts.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => { onChange(a.id); setOpen(false); }}
+              className={cn(
+                "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-accent",
+                a.id === value && "bg-accent"
+              )}
+            >
+              <EntityIcon icon={a.icon} color={a.color} fallback="account" size="xs" />
+              <span className="flex-1 truncate text-left">{a.name}</span>
+              {a.id === value && (
+                <svg className="h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+              )}
+            </button>
+          ))}
+          {accounts.length === 0 && (
+            <p className="px-2.5 py-2 text-sm text-muted-foreground">No accounts yet</p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

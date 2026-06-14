@@ -1,76 +1,48 @@
 "use client";
 
 import * as React from "react";
-import {
-  endOfMonth,
-  format,
-  startOfMonth,
-  differenceInDays,
-  startOfWeek,
-  startOfYear,
-  endOfYear,
-  startOfDay,
-  endOfDay,
-} from "date-fns";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+import { differenceInDays, format } from "date-fns";
+import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet } from "lucide-react";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
+import { NetWorthChart } from "@/components/dashboard/net-worth-chart";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Amount } from "@/components/shared/amount";
 import { EmptyState } from "@/components/shared/empty-state";
+import {
+  PeriodSelector,
+  PeriodNavigator,
+  navigatedPeriodRange,
+  type Period,
+} from "@/components/shared/period-selector";
 import { useSession } from "@/hooks/use-session";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useNetWorthHistory } from "@/hooks/use-net-worth-history";
 import { formatCurrency } from "@/lib/utils";
-
-type Range = "day" | "week" | "month" | "year" | "all";
-
-function rangeOf(range: Range): { from: Date; to: Date; label: string } {
-  const now = new Date();
-  if (range === "day")
-    return { from: startOfDay(now), to: endOfDay(now), label: "Today" };
-  if (range === "week")
-    return {
-      from: startOfWeek(now, { weekStartsOn: 1 }),
-      to: endOfDay(now),
-      label: "This week",
-    };
-  if (range === "year")
-    return { from: startOfYear(now), to: endOfYear(now), label: "This year" };
-  if (range === "all")
-    return {
-      from: new Date(2000, 0, 1),
-      to: endOfDay(now),
-      label: "All time",
-    };
-  return { from: startOfMonth(now), to: endOfMonth(now), label: "This month" };
-}
 
 export default function DashboardPage() {
   const { profile } = useSession();
   const currency = profile?.default_currency ?? "MXN";
-  const [range, setRange] = React.useState<Range>("month");
+  const [period, setPeriod] = React.useState<Period>("month");
+  const [offset, setOffset] = React.useState(0);
 
-  const { from, to, label } = React.useMemo(() => rangeOf(range), [range]);
+  // Reset offset when period changes
+  React.useEffect(() => { setOffset(0); }, [period]);
+
+  const { from, to, label } = React.useMemo(
+    () => navigatedPeriodRange(period, offset),
+    [period, offset]
+  );
 
   const { transactions, loading } = useTransactions({
     from: format(from, "yyyy-MM-dd"),
     to: format(to, "yyyy-MM-dd"),
   });
+
+  const { data: netWorthHistory, loading: nwLoading } = useNetWorthHistory(13);
 
   const totals = React.useMemo(() => {
     let income = 0;
@@ -86,9 +58,7 @@ export default function DashboardPage() {
         byCategory.set(cname, prev);
       }
     }
-    const cats = Array.from(byCategory.values()).sort(
-      (a, b) => b.total - a.total
-    );
+    const cats = Array.from(byCategory.values()).sort((a, b) => b.total - a.total);
     return { income, expense, net: income - expense, cats };
   }, [transactions]);
 
@@ -99,6 +69,7 @@ export default function DashboardPage() {
 
   const name = profile?.first_name ?? "there";
   const todayStr = format(new Date(), "EEEE, MMM d");
+  const currentNetWorth = netWorthHistory.at(-1)?.netWorth ?? 0;
 
   return (
     <div className="relative">
@@ -107,18 +78,8 @@ export default function DashboardPage() {
         description={todayStr}
         actions={
           <div className="flex items-center gap-2">
-            <Select value={range} onValueChange={(v) => setRange(v as Range)}>
-              <SelectTrigger className="h-9 w-[130px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">Today</SelectItem>
-                <SelectItem value="week">This week</SelectItem>
-                <SelectItem value="month">This month</SelectItem>
-                <SelectItem value="year">This year</SelectItem>
-                <SelectItem value="all">All time</SelectItem>
-              </SelectContent>
-            </Select>
+            <PeriodNavigator period={period} offset={offset} onOffsetChange={setOffset} />
+            <PeriodSelector value={period} onChange={setPeriod} />
             <div className="hidden md:block">
               <AddTransactionDialog />
             </div>
@@ -194,8 +155,7 @@ export default function DashboardPage() {
               </p>
             ) : (
               totals.cats.slice(0, 6).map((c) => {
-                const pct =
-                  totals.expense > 0 ? (c.total / totals.expense) * 100 : 0;
+                const pct = totals.expense > 0 ? (c.total / totals.expense) * 100 : 0;
                 return (
                   <div key={c.name} className="space-y-1.5">
                     <div className="flex items-center justify-between text-sm">
@@ -211,6 +171,32 @@ export default function DashboardPage() {
                   </div>
                 );
               })
+            )}
+          </CardContent>
+        </Card>
+      </PageSection>
+
+      <PageSection className="pt-0">
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle>Net worth</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                13-month evolution
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums">
+                <Amount value={currentNetWorth} currency={currency} />
+              </p>
+              <p className="text-xs text-muted-foreground">Current</p>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {nwLoading ? (
+              <div className="h-48 animate-pulse rounded-md bg-muted/60" />
+            ) : (
+              <NetWorthChart data={netWorthHistory} currency={currency} />
             )}
           </CardContent>
         </Card>
@@ -242,13 +228,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {transactions.slice(0, 5).map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between text-sm"
-              >
+              <div key={t.id} className="flex items-center justify-between text-sm">
                 <div className="min-w-0">
                   <p className="truncate font-medium">
-                    {t.category?.name ??
+                    {t.description ?? t.category?.name ??
                       (t.type === "transfer" ? "Transfer" : "Uncategorized")}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">

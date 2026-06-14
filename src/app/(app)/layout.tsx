@@ -4,6 +4,7 @@ import { SessionProvider } from "@/hooks/use-session";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 
 export default async function AppLayout({
   children,
@@ -25,16 +26,18 @@ export default async function AppLayout({
 
   return (
     <SessionProvider initialUser={user} initialProfile={profile ?? null}>
-      <div className="flex min-h-screen w-full">
-        <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Header />
-          <main className="flex-1 overflow-x-hidden pb-20 md:pb-0">
-            {children}
-          </main>
-          <BottomNav />
+      <AppShell>
+        <div className="flex min-h-screen w-full">
+          <Sidebar />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Header />
+            <main className="flex-1 overflow-x-hidden pb-20 md:pb-0">
+              {children}
+            </main>
+            <BottomNav />
+          </div>
         </div>
-      </div>
+      </AppShell>
     </SessionProvider>
   );
 }

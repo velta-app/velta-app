@@ -11,6 +11,14 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
 	allowedDevOrigins: ["192.168.9.36"],
+	images: {
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "www.google.com",
+			},
+		],
+	},
 };
 
 export default withSerwist(nextConfig);

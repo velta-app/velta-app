@@ -1,0 +1,158 @@
+/**
+ * Maps description keywords to domains for vendor logo lookup.
+ * Uses Google's favicon service (sz=128) — free, no auth required.
+ */
+
+const KEYWORD_MAP: [string, string][] = [
+  // AI / Dev tools
+  ["openai", "openai.com"],
+  ["chatgpt", "openai.com"],
+  ["anthropic", "anthropic.com"],
+  ["claude", "anthropic.com"],
+  ["gemini", "google.com"],
+  ["midjourney", "midjourney.com"],
+  ["cursor", "cursor.sh"],
+  ["github", "github.com"],
+  ["gitlab", "gitlab.com"],
+  ["vercel", "vercel.com"],
+  ["netlify", "netlify.com"],
+  ["heroku", "heroku.com"],
+  ["digitalocean", "digitalocean.com"],
+  ["aws", "aws.amazon.com"],
+  ["azure", "microsoft.com"],
+  ["railway", "railway.app"],
+  ["expo", "expo.dev"],
+  ["posthog", "posthog.com"],
+  // Productivity
+  ["notion", "notion.so"],
+  ["slack", "slack.com"],
+  ["figma", "figma.com"],
+  ["linear", "linear.app"],
+  ["jira", "atlassian.com"],
+  ["dropbox", "dropbox.com"],
+  ["1password", "1password.com"],
+  ["zoom", "zoom.us"],
+  ["loom", "loom.com"],
+  ["nordvpn", "nordvpn.com"],
+  ["nord vpn", "nordvpn.com"],
+  ["eraser", "eraser.io"],
+  ["capcut", "capcut.com"],
+  // Big tech
+  ["google", "google.com"],
+  ["microsoft", "microsoft.com"],
+  ["apple", "apple.com"],
+  ["icloud", "icloud.com"],
+  ["meta", "meta.com"],
+  ["facebook", "facebook.com"],
+  ["twitter", "twitter.com"],
+  ["tiktok", "tiktok.com"],
+  ["instagram", "instagram.com"],
+  ["discord", "discord.com"],
+  ["cloudflare", "cloudflare.com"],
+  // Streaming / Entertainment
+  ["netflix", "netflix.com"],
+  ["spotify", "spotify.com"],
+  ["youtube", "youtube.com"],
+  ["disney+", "disneyplus.com"],
+  ["disney", "disneyplus.com"],
+  ["hbo", "hbo.com"],
+  ["twitch", "twitch.tv"],
+  ["steam", "steampowered.com"],
+  ["xbox", "xbox.com"],
+  ["playstation", "playstation.com"],
+  ["nintendo", "nintendo.com"],
+  ["sony", "sony.com"],
+  // E-commerce
+  ["amazon", "amazon.com"],
+  ["amazon prime", "amazon.com"],
+  ["mercadolibre", "mercadolibre.com"],
+  ["mercadopago", "mercadopago.com.mx"],
+  ["shopify", "shopify.com"],
+  ["ebay", "ebay.com"],
+  // Food / Retail MX
+  ["oxxo", "oxxo.com"],
+  ["walmart", "walmart.com"],
+  ["walmex", "walmart.com"],
+  ["soriana", "soriana.com"],
+  ["chedraui", "chedraui.com.mx"],
+  ["costco", "costco.com"],
+  ["sams", "samsclub.com"],
+  ["liverpool", "liverpool.com.mx"],
+  ["sanborns", "sanborns.com.mx"],
+  ["palacio de hierro", "elpalaciodehierro.com"],
+  ["starbucks", "starbucks.com"],
+  ["mcdonalds", "mcdonalds.com"],
+  ["burger king", "burgerking.com"],
+  ["dominos", "dominos.com"],
+  ["pizza hut", "pizzahut.com"],
+  ["uber eats", "ubereats.com"],
+  ["rappi", "rappi.com"],
+  // Ride-share
+  ["uber", "uber.com"],
+  ["didi", "didiglobal.com"],
+  ["indriver", "indriver.com"],
+  ["cabify", "cabify.com"],
+  // Banks / Fintech MX
+  ["bbva", "bbva.com"],
+  ["banamex", "banamex.com"],
+  ["citibanamex", "banamex.com"],
+  ["santander", "santander.com"],
+  ["hsbc", "hsbc.com"],
+  ["banorte", "banorte.com"],
+  ["nubank", "nubank.com.br"],
+  ["nu mexico", "nu.com.mx"],
+  ["nu.com", "nu.com.mx"],
+  ["klar", "klar.mx"],
+  ["clip", "clip.mx"],
+  ["paypal", "paypal.com"],
+  ["stripe", "stripe.com"],
+  ["mercadopago", "mercadopago.com.mx"],
+  // Food
+  ["mcdonalds", "mcdonalds.com"],
+  ["burger king", "burgerking.com"],
+  ["dominos", "dominos.com"],
+  ["pizza hut", "pizzahut.com"],
+  ["starbucks", "starbucks.com"],
+  ["subway", "subway.com"],
+  ["chilis", "chilis.com"],
+  ["kfc", "kfc.com"],
+  ["popeyes", "popeyes.com"],
+  ["canes", "canes.com"],
+  ["cane's", "canes.com"],
+  ["raising cane's", "canes.com"],
+  ["chick fil a", "chickfila.com"],
+  ["chipotle", "chipotle.com"],
+  ["culvers", "culvers.com"],
+  ["denny's", "dennys.com"],
+  ["dunkin' donuts", "dunkindonuts.com"],
+  ["el pollo loco", "elpolloloco.com"],
+  ["five guys", "fiveguys.com"],
+  ["7-eleven", "7-eleven.com"],
+  ["circle k", "circlek.com"],
+  // Travel
+  ["airbnb", "airbnb.com"],
+  ["booking", "booking.com"],
+  ["airbnb", "airbnb.com"],
+  ["aeromexico", "aeromexico.com"],
+  ["volaris", "volaris.com"],
+  ["vivaaerobus", "vivaaerobus.com"],
+  ["airbus", "airbus.com"],
+  // Others
+  ["best buy", "bestbuy.com"],
+  ["platzi", "platzi.com"],
+  ["ludoria", "ludoria.app"],
+  ["epidemic", "epidemicsound.com"],
+  ["cfe", "cfe.gob.mx"],
+];
+
+export function getVendorLogoUrl(description: string): string | null {
+  if (!description) return null;
+  const lower = description.toLowerCase();
+
+  for (const [keyword, domain] of KEYWORD_MAP) {
+    if (lower.includes(keyword)) {
+      return `https://www.google.com/s2/favicons?sz=128&domain_url=https://${domain}`;
+    }
+  }
+  return null;
+}

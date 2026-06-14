@@ -278,14 +278,17 @@ export type Database = {
       }
       transactions: {
         Row: {
+          affects_balance: boolean
           amount: number
           category_id: string | null
           created_at: string
           currency: Database["public"]["Enums"]["currency_code"]
           date: string
+          description: string | null
           exchange_rate: number | null
           from_account_id: string | null
           id: string
+          import_batch_id: string | null
           is_recurring_instance: boolean
           note: string | null
           recurring_rule_id: string | null
@@ -295,14 +298,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          affects_balance?: boolean
           amount: number
           category_id?: string | null
           created_at?: string
           currency: Database["public"]["Enums"]["currency_code"]
           date?: string
+          description?: string | null
           exchange_rate?: number | null
           from_account_id?: string | null
           id?: string
+          import_batch_id?: string | null
           is_recurring_instance?: boolean
           note?: string | null
           recurring_rule_id?: string | null
@@ -312,14 +318,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          affects_balance?: boolean
           amount?: number
           category_id?: string | null
           created_at?: string
           currency?: Database["public"]["Enums"]["currency_code"]
           date?: string
+          description?: string | null
           exchange_rate?: number | null
           from_account_id?: string | null
           id?: string
+          import_batch_id?: string | null
           is_recurring_instance?: boolean
           note?: string | null
           recurring_rule_id?: string | null

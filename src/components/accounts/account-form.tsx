@@ -277,6 +277,7 @@ export function AccountForm({ initial, onDone }: AccountFormProps) {
       <Button type="submit" className="w-full" size="lg" disabled={loading}>
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         {initial?.id ? "Save changes" : "Create account"}
+        <span className="ml-auto rounded border border-current/20 bg-current/10 px-1.5 tracking-widest text-base">⌘↵</span>
       </Button>
     </form>
   );

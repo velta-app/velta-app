@@ -233,7 +233,7 @@ function SortableAccountCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative",
+        "group relative h-full",
         isDragging && "z-10 opacity-70"
       )}
     >
@@ -315,8 +315,8 @@ function AccountCard({
   }
 
   return (
-    <Card className="relative overflow-hidden">
-      <CardContent className="p-5">
+    <Card className="relative h-full overflow-hidden">
+      <CardContent className="flex h-full flex-col p-5">
         <div className="flex items-start justify-between">
           <div className="flex min-w-0 items-center gap-2.5">
             <EntityIcon
@@ -365,7 +365,7 @@ function AccountCard({
           </div>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-5 flex-1">
           <Amount
             value={headline}
             currency={account.currency}
