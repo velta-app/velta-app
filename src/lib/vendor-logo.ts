@@ -143,16 +143,66 @@ const KEYWORD_MAP: [string, string][] = [
   ["ludoria", "ludoria.app"],
   ["epidemic", "epidemicsound.com"],
   ["cfe", "cfe.gob.mx"],
+  // Telecom / utilities / services MX
+  ["telcel", "telcel.com"],
+  ["izzi", "izzi.mx"],
+  ["totalplay", "totalplay.com.mx"],
+  ["megacable", "megacable.com.mx"],
+  ["at&t", "att.com.mx"],
+  ["telmex", "telmex.com"],
+  ["infinitum", "telmex.com"],
+  ["naturgy", "naturgy.com.mx"],
+  ["smart fit", "smartfit.com.mx"],
+  ["smartfit", "smartfit.com.mx"],
+  ["gnp", "gnp.com.mx"],
+  ["axa", "axa.mx"],
+  ["qualitas", "qualitas.com.mx"],
+  ["prime video", "primevideo.com"],
+  ["apple tv", "tv.apple.com"],
+  ["crunchyroll", "crunchyroll.com"],
+  ["vix", "vix.com"],
+  ["duolingo", "duolingo.com"],
+  ["adobe", "adobe.com"],
+  ["canva", "canva.com"],
+  ["godaddy", "godaddy.com"],
+  ["namecheap", "namecheap.com"],
+  ["supabase", "supabase.com"],
 ];
 
-export function getVendorLogoUrl(description: string): string | null {
+function faviconUrl(domain: string) {
+  return `https://www.google.com/s2/favicons?sz=128&domain_url=https://${domain}`;
+}
+
+/** Normalises user input like "https://www.netflix.com/mx" → "netflix.com". */
+export function normalizeDomain(input: string | null | undefined) {
+  if (!input) return null;
+  const d = input
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .split(/[/?#]/)[0];
+  return d.includes(".") ? d : null;
+}
+
+/** Best-guess domain for a name ("Netflix Premium" → "netflix.com"). */
+export function guessDomain(description: string | null | undefined) {
   if (!description) return null;
   const lower = description.toLowerCase();
-
   for (const [keyword, domain] of KEYWORD_MAP) {
-    if (lower.includes(keyword)) {
-      return `https://www.google.com/s2/favicons?sz=128&domain_url=https://${domain}`;
-    }
+    if (lower.includes(keyword)) return domain;
   }
   return null;
+}
+
+export function getVendorLogoUrl(description: string): string | null {
+  const domain = guessDomain(description);
+  return domain ? faviconUrl(domain) : null;
+}
+
+/** Logo for a planned item: explicit domain wins, otherwise guess from the name. */
+export function getItemLogoUrl(name: string, logoDomain?: string | null) {
+  const explicit = normalizeDomain(logoDomain);
+  if (explicit) return faviconUrl(explicit);
+  return getVendorLogoUrl(name);
 }

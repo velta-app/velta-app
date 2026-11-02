@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Velta — Personal Finance",
+    default: "Velta — Budget",
     template: "%s · Velta",
   },
   description:
-    "Velta is a personal finance app that helps you track accounts, budgets, and spending with clarity.",
+    "Private budgeting: split your money, plan recurring and future expenses, and catch risks early.",
   applicationName: "Velta",
   manifest: "/manifest.json",
   appleWebApp: {
@@ -30,14 +30,16 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/icons/icon.svg",
-    apple: "/icons/icon.svg",
+    apple: "/icons/apple-touch-icon.png",
   },
+  formatDetection: { telephone: false },
+  robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#00a63e" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0f0c" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
   ],
   width: "device-width",
   initialScale: 1,

@@ -52,7 +52,7 @@ export function EntityIcon({
         color: c,
       }}
     >
-      <Icon className={iconSize} strokeWidth={2} />
+      {React.createElement(Icon, { className: iconSize, strokeWidth: 2 })}
     </span>
   );
 }

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SessionProvider } from "@/hooks/use-session";
+import { BudgetProvider } from "@/hooks/use-budget";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Header } from "@/components/layout/header";
@@ -26,18 +27,20 @@ export default async function AppLayout({
 
   return (
     <SessionProvider initialUser={user} initialProfile={profile ?? null}>
-      <AppShell>
-        <div className="flex min-h-screen w-full">
-          <Sidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <Header />
-            <main className="flex-1 overflow-x-hidden pb-20 md:pb-0">
-              {children}
-            </main>
-            <BottomNav />
+      <BudgetProvider>
+        <AppShell>
+          <div className="flex min-h-dvh w-full">
+            <Sidebar />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Header />
+              <main className="flex-1 overflow-x-clip pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
+                {children}
+              </main>
+              <BottomNav />
+            </div>
           </div>
-        </div>
-      </AppShell>
+        </AppShell>
+      </BudgetProvider>
     </SessionProvider>
   );
 }

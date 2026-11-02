@@ -1,5 +1,3 @@
-import { Brand } from "@/components/shared/brand";
-import Link from "next/link";
 
 export default function AuthLayout({
   children,

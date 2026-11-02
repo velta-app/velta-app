@@ -9,15 +9,15 @@ export type Currency = "MXN" | "USD";
 
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 
-function getFormatter(currency: Currency, locale = "en-US") {
-  const key = `${locale}-${currency}`;
+function getFormatter(currency: Currency, digits: number, locale = "en-US") {
+  const key = `${locale}-${currency}-${digits}`;
   let fmt = currencyFormatters.get(key);
   if (!fmt) {
     fmt = new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
     });
     currencyFormatters.set(key, fmt);
   }
@@ -27,7 +27,7 @@ function getFormatter(currency: Currency, locale = "en-US") {
 export function formatCurrency(
   amount: number | string | null | undefined,
   currency: Currency = "MXN",
-  options: { signed?: boolean; compact?: boolean } = {}
+  options: { signed?: boolean; compact?: boolean; cents?: boolean } = {}
 ) {
   const n = typeof amount === "string" ? Number(amount) : amount ?? 0;
   if (!Number.isFinite(n)) return "—";
@@ -40,7 +40,9 @@ export function formatCurrency(
     return `${currency === "MXN" ? "MX$" : "$"}${formatted}`;
   }
 
-  const formatted = getFormatter(currency).format(Math.abs(n));
+  // Budget-level numbers read better without cents; small amounts keep them.
+  const digits = options.cents || Math.abs(n) < 1000 ? 2 : 0;
+  const formatted = getFormatter(currency, digits).format(Math.abs(n));
   if (options.signed && n !== 0) {
     return `${n < 0 ? "−" : "+"}${formatted}`;
   }

@@ -2,26 +2,21 @@
 
 import * as React from "react";
 
-export type EntityTable =
-  | "accounts"
-  | "categories"
-  | "transactions"
-  | "budgets"
-  | "recurring_rules";
+export type EntityTable = "funds" | "buckets" | "planned_items" | "profiles";
 
 const EVENT_NAME = "velta:mutate";
 
+/** Notify listeners that a table changed locally (instant refresh, no waiting on realtime). */
 export function emitMutation(...tables: EntityTable[]) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: { tables } }));
 }
 
-export function useMutationListener(
-  tables: EntityTable[],
-  fn: () => void
-) {
+export function useMutationListener(tables: EntityTable[], fn: () => void) {
   const fnRef = React.useRef(fn);
-  fnRef.current = fn;
+  React.useEffect(() => {
+    fnRef.current = fn;
+  });
   const key = tables.join(",");
 
   React.useEffect(() => {

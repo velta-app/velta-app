@@ -1,27 +1,15 @@
-import {
-  LayoutDashboard,
-  ArrowLeftRight,
-  Wallet,
-  Layers,
-  PiggyBank,
-  Repeat,
-  Settings,
-  TrendingUp,
-  Download,
-} from "lucide-react";
+import { CalendarRange, PieChart, Receipt, Settings, Wallet } from "lucide-react";
 
 export const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/cashflow", label: "Cashflow", icon: TrendingUp },
-  { href: "/accounts", label: "Accounts", icon: Wallet },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/categories", label: "Categories", icon: Layers },
-  { href: "/budgets", label: "Budgets", icon: PiggyBank },
-  { href: "/recurring", label: "Recurring", icon: Repeat },
-  { href: "/import", label: "Import Transactions", icon: Download },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/", label: "Budget", icon: PieChart, key: "b" },
+  { href: "/forecast", label: "Forecast", icon: CalendarRange, key: "f" },
+  { href: "/expenses", label: "Expenses", icon: Receipt, key: "e" },
+  { href: "/money", label: "Money", icon: Wallet, key: "m" },
+  { href: "/settings", label: "Settings", icon: Settings, key: "s" },
 ] as const;
 
-export const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((i) =>
-  ["/", "/cashflow", "/transactions", "/accounts", "/budgets"].includes(i.href)
-);
+export const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.href !== "/settings");
+
+export function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}

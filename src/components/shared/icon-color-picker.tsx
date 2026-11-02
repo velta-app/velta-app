@@ -24,6 +24,7 @@ interface IconColorPickerProps {
   onChange: (next: { icon: string; color: string }) => void;
   fallback?: "account" | "category";
   lockColor?: boolean;
+  size?: "md" | "lg" | "xl";
 }
 
 export function IconColorPicker({
@@ -32,6 +33,7 @@ export function IconColorPicker({
   onChange,
   fallback = "category",
   lockColor = false,
+  size = "xl",
 }: IconColorPickerProps) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
@@ -56,7 +58,7 @@ export function IconColorPicker({
             icon={activeIcon}
             color={activeColor}
             fallback={fallback}
-            size="xl"
+            size={size}
           />
           <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
             <Pencil className="h-3 w-3" />

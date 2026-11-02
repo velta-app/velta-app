@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Brand } from "@/components/shared/brand";
 import { LoginForm } from "./login-form";
 
@@ -25,15 +24,6 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/signup"
-          className="font-medium text-foreground hover:text-primary"
-        >
-          Sign up
-        </Link>
-      </p>
     </div>
   );
 }
