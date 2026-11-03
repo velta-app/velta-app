@@ -6,50 +6,42 @@ export const CURRENCIES: { value: Currency; label: string; symbol: string }[] =
     { value: "USD", label: "US Dollar", symbol: "$" },
   ];
 
-export const ACCOUNT_TYPES = [
-  { value: "regular", label: "Regular", hint: "Debit accounts, cash, etc." },
-  { value: "debt", label: "Debt", hint: "Credit cards, loans" },
-  { value: "savings", label: "Savings", hint: "Goal-based savings" },
-] as const;
-
-export type AccountType = (typeof ACCOUNT_TYPES)[number]["value"];
-
-export const TRANSACTION_TYPES = [
-  { value: "expense", label: "Expense" },
-  { value: "income", label: "Income" },
-  { value: "transfer", label: "Transfer" },
-] as const;
-
-export type TransactionType = (typeof TRANSACTION_TYPES)[number]["value"];
-
-export const CATEGORY_TYPES = [
-  { value: "expense", label: "Expense" },
-  { value: "income", label: "Income" },
-] as const;
-
-export type CategoryType = (typeof CATEGORY_TYPES)[number]["value"];
-
+/** How often a planned item repeats. `months` = step between occurrences. */
 export const FREQUENCIES = [
-  { value: "daily", label: "Daily" },
-  { value: "every_2_days", label: "Every 2 days" },
-  { value: "weekdays", label: "Weekdays" },
-  { value: "weekends", label: "Weekends" },
-  { value: "weekly", label: "Weekly" },
-  { value: "every_2_weeks", label: "Every 2 weeks" },
-  { value: "every_4_weeks", label: "Every 4 weeks" },
-  { value: "monthly", label: "Monthly" },
-  { value: "every_2_months", label: "Every 2 months" },
-  { value: "every_3_months", label: "Every 3 months" },
-  { value: "every_6_months", label: "Every 6 months" },
-  { value: "yearly", label: "Yearly" },
+  { value: "monthly", label: "Monthly", short: "/mo", months: 1 },
+  { value: "bimonthly", label: "Every 2 months", short: "/2mo", months: 2 },
+  { value: "quarterly", label: "Every 3 months", short: "/3mo", months: 3 },
+  { value: "semiannual", label: "Every 6 months", short: "/6mo", months: 6 },
+  { value: "annual", label: "Yearly", short: "/yr", months: 12 },
+  { value: "one_time", label: "One-time", short: "once", months: 0 },
 ] as const;
 
 export type Frequency = (typeof FREQUENCIES)[number]["value"];
 
-export const BUDGET_PERIODS = [
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
+export function frequencyMeta(f: Frequency) {
+  return FREQUENCIES.find((x) => x.value === f) ?? FREQUENCIES[0];
+}
+
+export const ITEM_KINDS = [
+  { value: "expense", label: "Expense" },
+  { value: "income", label: "Income" },
 ] as const;
 
-export type BudgetPeriod = (typeof BUDGET_PERIODS)[number]["value"];
+export type ItemKind = (typeof ITEM_KINDS)[number]["value"];
+
+export const HORIZONS = [
+  { value: 1, label: "1M" },
+  { value: 3, label: "3M" },
+  { value: 6, label: "6M" },
+  { value: 12, label: "12M" },
+  { value: 24, label: "24M" },
+] as const;
+
+/** Suggested starting split (50 / 30 / 20 rule). */
+export const DEFAULT_BUCKETS = [
+  { name: "Needs", percent: 50, color: "#3b82f6", icon: "home" },
+  { name: "Wishes", percent: 30, color: "#db2777", icon: "sparkles" },
+  { name: "Savings", percent: 20, color: "#00a63e", icon: "piggy-bank" },
+] as const;
+
+export const NOT_SET_COLOR = "#a1a1aa";

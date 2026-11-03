@@ -1,218 +1,259 @@
 "use client";
 
 import * as React from "react";
-import { Laptop, LogOut, Moon, Sun, Loader2 } from "lucide-react";
+import { formatDistanceToNowStrict, parseISO } from "date-fns";
+import { Laptop, Loader2, LogOut, Moon, RefreshCw, Share, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
+import { CurrencyToggle } from "@/components/shared/currency-toggle";
+import { HorizonPicker } from "@/components/budget/horizon-picker";
 import { useSession } from "@/hooks/use-session";
-import { createClient } from "@/lib/supabase/client";
-import { CURRENCIES } from "@/lib/constants";
-import { cn, initials } from "@/lib/utils";
-import type { Currency } from "@/lib/utils";
+import { useUpdateProfile } from "@/hooks/use-budget";
+import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
-  const { user, profile, refresh, signOut } = useSession();
-  const supabase = React.useMemo(() => createClient(), []);
+  const { user, profile, signOut } = useSession();
+  const update = useUpdateProfile();
   const { theme, setTheme } = useTheme();
 
-  const [firstName, setFirstName] = React.useState(profile?.first_name ?? "");
-  const [lastName, setLastName] = React.useState(profile?.last_name ?? "");
-  const [currency, setCurrency] = React.useState<Currency>(
-    (profile?.default_currency ?? "MXN") as Currency
-  );
-  const [avatarUrl, setAvatarUrl] = React.useState(profile?.avatar_url ?? "");
-  const [saving, setSaving] = React.useState(false);
+  const [rate, setRate] = React.useState(String(profile?.usd_mxn_rate ?? ""));
+  const [buffer, setBuffer] = React.useState(String(profile?.safety_buffer ?? 0));
+  const [name, setName] = React.useState(profile?.first_name ?? "");
+  const [refreshing, setRefreshing] = React.useState(false);
 
   React.useEffect(() => {
-    setFirstName(profile?.first_name ?? "");
-    setLastName(profile?.last_name ?? "");
-    setCurrency((profile?.default_currency ?? "MXN") as Currency);
-    setAvatarUrl(profile?.avatar_url ?? "");
-  }, [profile]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync from server
+    setRate(String(profile?.usd_mxn_rate ?? ""));
+    setBuffer(String(profile?.safety_buffer ?? 0));
+    setName(profile?.first_name ?? "");
+  }, [profile?.usd_mxn_rate, profile?.safety_buffer, profile?.first_name]);
 
-  async function saveProfile(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        first_name: firstName,
-        last_name: lastName || null,
-        default_currency: currency,
-        avatar_url: avatarUrl || null,
-      })
-      .eq("id", user.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+  async function save(patch: Parameters<typeof update>[0], message = "Saved") {
+    const { error } = await update(patch);
+    if (error) toast.error(error.message);
+    else toast.success(message);
+  }
+
+  async function refreshRate() {
+    setRefreshing(true);
+    try {
+      const res = await fetch("/api/fx", { cache: "no-store" });
+      const json = (await res.json()) as { rate?: number };
+      if (!json.rate) throw new Error("Rate unavailable right now");
+      await save(
+        { usd_mxn_rate: json.rate, fx_updated_at: new Date().toISOString(), fx_auto: true },
+        `1 USD = ${json.rate.toFixed(4)} MXN`
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not fetch rate");
+    } finally {
+      setRefreshing(false);
     }
-    toast.success("Profile updated");
-    refresh();
   }
 
   return (
-    <div>
-      <PageHeader title="Settings" description="Account & preferences" />
-
+    <div className="mx-auto max-w-4xl">
+      <PageHeader title="Settings" className="hidden md:flex" />
       <PageSection className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Profile</CardTitle>
+            <CardTitle>Budget</CardTitle>
+            <CardDescription>How Velta calculates your split and warnings</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={saveProfile} className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={avatarUrl || undefined} />
-                  <AvatarFallback>
-                    {initials(`${firstName} ${lastName}`)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-2">
-                  <Label htmlFor="avatarUrl">Avatar URL</Label>
-                  <Input
-                    id="avatarUrl"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://…"
-                  />
-                </div>
+          <CardContent className="space-y-5">
+            <Row label="Display currency" hint="Everything converts to this">
+              <CurrencyToggle />
+            </Row>
+            <div className="space-y-2">
+              <Label>Look ahead</Label>
+              <HorizonPicker />
+            </div>
+            <Row
+              label="Count expected income"
+              hint="Add income planned inside the horizon to the money you split"
+            >
+              <Switch
+                checked={profile?.include_income ?? true}
+                onCheckedChange={(v) => save({ include_income: v })}
+              />
+            </Row>
+            <form
+              className="space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                save({ safety_buffer: Number(buffer) || 0 });
+              }}
+            >
+              <Label htmlFor="buffer">Safety cushion ({profile?.default_currency ?? "MXN"})</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="buffer"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  value={buffer}
+                  onChange={(e) => setBuffer(e.target.value)}
+                />
+                <Button type="submit" variant="outline">Save</Button>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First name</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last name</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="currency">Default currency</Label>
-                <Select
-                  value={currency}
-                  onValueChange={(v) => setCurrency(v as Currency)}
-                >
-                  <SelectTrigger id="currency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label} ({c.symbol})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save changes
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                Warn me when the projected balance drops below this.
+              </p>
             </form>
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { value: "light", label: "Light", icon: Sun },
-                  { value: "dark", label: "Dark", icon: Moon },
-                  { value: "system", label: "System", icon: Laptop },
-                ].map((opt) => {
-                  const Icon = opt.icon;
-                  const active = theme === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setTheme(opt.value)}
-                      className={cn(
-                        "flex flex-col items-center gap-2 rounded-lg border border-border p-4 transition-colors",
-                        active
-                          ? "border-primary bg-accent text-accent-foreground"
-                          : "hover:bg-muted"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-xs font-medium">{opt.label}</span>
-                    </button>
-                  );
-                })}
+        <Card>
+          <CardHeader>
+            <CardTitle>Exchange rate</CardTitle>
+            <CardDescription suppressHydrationWarning>
+              {profile?.fx_updated_at
+                ? `Updated ${formatDistanceToNowStrict(parseISO(profile.fx_updated_at), { addSuffix: true })}`
+                : "Used to combine MXN and USD"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <form
+              className="space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const r = Number(rate);
+                if (!(r > 0)) return toast.error("Enter a valid rate");
+                save({ usd_mxn_rate: r, fx_auto: false, fx_updated_at: new Date().toISOString() });
+              }}
+            >
+              <Label htmlFor="rate">1 USD in MXN</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="rate"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.0001"
+                  min="0"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                  className="tabular-nums"
+                />
+                <Button type="submit" variant="outline">Set</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-11 w-11 shrink-0 md:h-10 md:w-10"
+                  onClick={refreshRate}
+                  disabled={refreshing}
+                  aria-label="Fetch latest rate"
+                >
+                  {refreshing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </form>
+            <Row label="Auto-update daily" hint="Setting a rate by hand turns this off">
+              <Switch
+                checked={profile?.fx_auto ?? true}
+                onCheckedChange={(v) => save({ fx_auto: v, fx_updated_at: v ? null : profile?.fx_updated_at })}
+              />
+            </Row>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Account</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-md border border-border bg-muted/40 p-3">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Signed in as
-                </p>
-                <p className="mt-1 text-sm font-medium break-all">
-                  {user?.email ?? "—"}
-                </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: "light", label: "Light", icon: Sun },
+                { value: "dark", label: "Dark", icon: Moon },
+                { value: "system", label: "System", icon: Laptop },
+              ].map((opt) => {
+                const Icon = opt.icon;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTheme(opt.value)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border border-border p-4 transition-colors",
+                      theme === opt.value
+                        ? "border-primary bg-accent text-accent-foreground"
+                        : "hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="text-xs font-medium">{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form
+              className="space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (name.trim()) save({ first_name: name.trim() });
+              }}
+            >
+              <Label htmlFor="name">Name</Label>
+              <div className="flex gap-2">
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                <Button type="submit" variant="outline">Save</Button>
               </div>
-              <Button
-                variant="outline"
-                onClick={signOut}
-                className="w-full justify-start"
-              >
-                <LogOut className="h-4 w-4" /> Sign out
-              </Button>
-            </CardContent>
-          </Card>
+            </form>
+            <p className="break-all text-xs text-muted-foreground">
+              Signed in as {user?.email ?? "—"} · private app, sign-ups disabled
+            </p>
+            <Button variant="outline" onClick={signOut} className="w-full justify-start">
+              <LogOut className="h-4 w-4" /> Sign out
+            </Button>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>About</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              <p className="text-sm">Velta</p>
-              <p className="text-xs text-muted-foreground">
-                Personal finance, designed for clarity.
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">Version 0.1.0</p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="md:col-span-2">
+          <CardContent className="flex items-start gap-3 p-4 text-sm">
+            <Share className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              <span className="font-medium text-foreground">Install on iPhone:</span> open
+              Velta in Safari, tap Share, then “Add to Home Screen”. It opens full-screen
+              like a native app.
+            </p>
+          </CardContent>
+        </Card>
       </PageSection>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+      <div className="shrink-0">{children}</div>
     </div>
   );
 }
