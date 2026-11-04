@@ -15,26 +15,15 @@ export function Brand({ className, iconOnly, size = "md" }: BrandProps) {
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <span
-        className={cn(
-          "relative flex items-center justify-center rounded-xl bg-gradient-to-br from-apple-400 to-apple-700 text-white shadow-md shadow-apple-700/30",
-          sizes[size].icon
-        )}
+      <svg
+        viewBox="0 0 512 512"
+        className={cn("shrink-0", sizes[size].icon)}
+        aria-hidden
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="h-1/2 w-1/2"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <path d="M4 18 L12 4 L20 18" />
-          <path d="M8 14 L16 14" />
-        </svg>
-      </span>
+        <polygon points="96,112 188,112 300,408 212,408" fill="#2dfb78" />
+        <polygon points="324,112 416,112 300,408 212,408" fill="#00a63e" />
+        <polygon points="256,291.7 300,408 212,408" fill="#067530" />
+      </svg>
       {!iconOnly && (
         <span
           className={cn(
