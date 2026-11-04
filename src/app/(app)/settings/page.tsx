@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CurrencyToggle } from "@/components/shared/currency-toggle";
 import { HorizonPicker } from "@/components/budget/horizon-picker";
+import { ChangePasswordForm } from "@/components/settings/change-password-form";
 import { useSession } from "@/hooks/use-session";
 import { useUpdateProfile } from "@/hooks/use-budget";
 import { cn } from "@/lib/utils";
@@ -217,6 +218,7 @@ export default function SettingsPage() {
             <p className="break-all text-xs text-muted-foreground">
               Signed in as {user?.email ?? "—"} · private app, sign-ups disabled
             </p>
+            <ChangePasswordForm />
             <Button variant="outline" onClick={signOut} className="w-full justify-start">
               <LogOut className="h-4 w-4" /> Sign out
             </Button>
